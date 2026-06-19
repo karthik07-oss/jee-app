@@ -1,18 +1,40 @@
-/* styles.css — global, mobile-first. Kept in its own file (not inline in
-   components) so it's one place to look for visual issues, and so screens
-   stay focused on structure/logic rather than styling. */
+/* styles.css — design system for JEE Exam Simulator.
+   ────────────────────────────────────────────────────────────────────────
+   Concept: this app's one job is to feel like sitting a real proctored exam,
+   then like opening a results sheet afterward. So the visual language is
+   borrowed from the actual artifacts of that world — OMR answer bubbles,
+   monospace question numbering, the amber "in-progress" marker pen color
+   used on real answer keys — rather than a generic mobile-app dashboard.
+*/
 
 * { box-sizing: border-box; }
+
+:root {
+  --ink: #0B1020;
+  --ink-raised: #11172A;
+  --paper: #F8FAFC;
+  --muted: #94A3B8;
+  --line: rgba(148,163,184,0.18);
+  --amber: #FCA311;
+  --good: #34D399;
+  --bad: #F87171;
+  --focus: #4F6EF7;
+}
 
 html, body {
   margin: 0;
   padding: 0;
   height: 100%;
-  background: #0F172A;
-  color: #E2E8F0;
-  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: contain;
+}
+
+.mono {
+  font-family: "JetBrains Mono", "SF Mono", "Roboto Mono", ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
 }
 
 #app {
@@ -22,83 +44,248 @@ html, body {
   flex-direction: column;
 }
 
+/* ── Boot screen ──────────────────────────────────────────────────────── */
 .boot-screen {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 14px;
 }
-
 .boot-logo {
-  font-size: 40px;
-  font-weight: 900;
-  letter-spacing: 4px;
-  color: #A78BFA;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 6px;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  padding: 10px 18px;
+  border-radius: 4px;
+}
+.boot-screen p { color: var(--muted); font-size: 13px; margin: 0; }
+
+/* ── Layout primitives ────────────────────────────────────────────────── */
+.screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 22px 18px calc(22px + env(safe-area-inset-bottom));
+  gap: 16px;
+  max-width: 640px;
+  width: 100%;
+  margin: 0 auto;
 }
 
-button {
-  font-family: inherit;
-  -webkit-tap-highlight-color: transparent;
+.eyebrow {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin: 0;
 }
+
+h1.page-title {
+  font-size: 21px;
+  font-weight: 800;
+  margin: 2px 0 0;
+  letter-spacing: -0.01em;
+}
+
+.subtext {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.card {
+  background: var(--ink-raised);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 18px;
+}
+
+.divider {
+  border: none;
+  border-top: 1px dashed var(--line);
+  margin: 4px 0;
+}
+
+/* ── Buttons ──────────────────────────────────────────────────────────── */
+button { font-family: inherit; -webkit-tap-highlight-color: transparent; cursor: pointer; }
 
 .btn-primary {
-  background: linear-gradient(160deg, #818CF8, #6366F1 45%, #4F46E5 100%);
-  border: 1px solid rgba(255,255,255,0.3);
-  border-bottom: 4px solid #4338CA;
-  border-radius: 14px;
+  background: var(--focus);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 12px;
   color: #fff;
   font-weight: 700;
   padding: 16px;
   font-size: 15px;
   min-height: 52px;
-  cursor: pointer;
+  transition: transform 0.08s ease, opacity 0.15s ease;
 }
+.btn-primary:active { transform: scale(0.98); }
+.btn-primary:disabled { opacity: 0.5; }
 
 .btn-secondary {
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(148,163,184,0.3);
-  border-radius: 14px;
-  color: #E2E8F0;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--paper);
   font-weight: 600;
-  padding: 16px;
-  font-size: 15px;
-  min-height: 52px;
-  cursor: pointer;
+  padding: 14px 16px;
+  font-size: 14px;
+  min-height: 48px;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.btn-secondary:active { background: rgba(255,255,255,0.04); }
+
+.btn-ghost {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 13px;
+  padding: 8px 4px;
 }
 
-.card {
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(148,163,184,0.15);
-  border-radius: 16px;
-  padding: 18px;
+.btn-danger {
+  background: rgba(248,113,113,0.12);
+  border: 1px solid rgba(248,113,113,0.4);
+  color: var(--bad);
+  border-radius: 12px;
+  font-weight: 700;
+  padding: 14px 16px;
+  min-height: 48px;
 }
 
-.screen {
-  flex: 1;
+/* ── OMR-style answer bubbles ─────────────────────────────────────────── */
+.omr-row {
   display: flex;
-  flex-direction: column;
-  padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
-  gap: 14px;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 4px;
+}
+.omr-bubble {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  flex-shrink: 0;
+  transition: all 0.12s ease;
+}
+.omr-bubble.selected {
+  background: var(--focus);
+  border-color: var(--focus);
+  color: #fff;
+}
+.omr-bubble.correct {
+  background: var(--good);
+  border-color: var(--good);
+  color: #06281C;
+}
+.omr-bubble.incorrect {
+  background: var(--bad);
+  border-color: var(--bad);
+  color: #2A0A0A;
+}
+.omr-option-text { font-size: 14px; flex: 1; }
+
+/* ── Question number badge ───────────────────────────────────────────── */
+.q-number {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--amber);
+  border-radius: 6px;
+  padding: 3px 8px;
+  display: inline-block;
 }
 
+/* ── Banners ──────────────────────────────────────────────────────────── */
 .warning-banner {
-  background: linear-gradient(160deg, #FEF9E7, #FDE9C8);
-  border: 1px solid rgba(251,191,36,0.4);
+  background: rgba(252,163,17,0.1);
+  border: 1px solid rgba(252,163,17,0.35);
   border-radius: 12px;
-  padding: 12px 14px;
-  color: #7C2D12;
-  font-size: 12px;
+  padding: 13px 14px;
+  color: #FDE68A;
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+.error-banner {
+  background: rgba(248,113,113,0.1);
+  border: 1px solid rgba(248,113,113,0.35);
+  border-radius: 12px;
+  padding: 13px 14px;
+  color: #FCA5A5;
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+.success-banner {
+  background: rgba(52,211,153,0.1);
+  border: 1px solid rgba(52,211,153,0.35);
+  border-radius: 12px;
+  padding: 13px 14px;
+  color: #6EE7B7;
+  font-size: 12.5px;
   line-height: 1.6;
 }
 
-.error-banner {
-  background: linear-gradient(160deg, #FEE2E2, #FECACA);
-  border: 1px solid rgba(248,113,113,0.5);
-  border-radius: 12px;
-  padding: 12px 14px;
-  color: #7F1D1D;
-  font-size: 12px;
-  line-height: 1.6;
+/* ── Form fields ──────────────────────────────────────────────────────── */
+textarea, input[type="text"], select {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--paper);
+  padding: 11px 12px;
+  font-size: 13px;
+  font-family: inherit;
 }
+textarea:focus, input[type="text"]:focus, select:focus {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+textarea.mono-input { font-family: "JetBrains Mono", ui-monospace, monospace; }
+
+/* ── Stat / score readouts ───────────────────────────────────────────── */
+.stat-row { display: flex; gap: 10px; }
+.stat {
+  flex: 1;
+  background: var(--ink-raised);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+}
+.stat-value {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 20px;
+  font-weight: 800;
+}
+.stat-label {
+  font-size: 10.5px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+.stat-value.good { color: var(--good); }
+.stat-value.bad { color: var(--bad); }
+.stat-value.amber { color: var(--amber); }
+
+/* ── Accessibility ────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
