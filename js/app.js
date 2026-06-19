@@ -21,8 +21,8 @@ async function registerServiceWorker() {
 // whole app from loading (unlike the old single giant file).
 const routes = {
   setup: () => import("./screens/setup.js").then((m) => m.renderSetup),
+  import: () => import("./screens/importPaper.js").then((m) => m.renderImportPaper),
   // Remaining screens are added as they're built:
-  // import: () => import("./screens/importPaper.js").then((m) => m.renderImportPaper),
   // exam: () => import("./screens/exam.js").then((m) => m.renderExam),
   // result: () => import("./screens/result.js").then((m) => m.renderResult),
   // progress: () => import("./screens/progress.js").then((m) => m.renderProgress),
@@ -32,7 +32,15 @@ let currentParams = {};
 
 function navigate(screenName, params = {}) {
   currentParams = params;
-  window.location.hash = screenName;
+  const newHash = "#" + screenName;
+  if (window.location.hash === newHash) {
+    // Hash unchanged (e.g. re-importing for the same mode) — hashchange won't
+    // fire on its own, so render directly to make sure new params take effect.
+    renderCurrentScreen();
+  } else {
+    window.location.hash = newHash;
+    // hashchange listener (registered below) will call renderCurrentScreen().
+  }
 }
 
 async function renderCurrentScreen() {
