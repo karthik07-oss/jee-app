@@ -1,0 +1,104 @@
+/* styles.css — global, mobile-first. Kept in its own file (not inline in
+   components) so it's one place to look for visual issues, and so screens
+   stay focused on structure/logic rather than styling. */
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: #0F172A;
+  color: #E2E8F0;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: contain;
+}
+
+#app {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.boot-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.boot-logo {
+  font-size: 40px;
+  font-weight: 900;
+  letter-spacing: 4px;
+  color: #A78BFA;
+}
+
+button {
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn-primary {
+  background: linear-gradient(160deg, #818CF8, #6366F1 45%, #4F46E5 100%);
+  border: 1px solid rgba(255,255,255,0.3);
+  border-bottom: 4px solid #4338CA;
+  border-radius: 14px;
+  color: #fff;
+  font-weight: 700;
+  padding: 16px;
+  font-size: 15px;
+  min-height: 52px;
+  cursor: pointer;
+}
+
+.btn-secondary {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(148,163,184,0.3);
+  border-radius: 14px;
+  color: #E2E8F0;
+  font-weight: 600;
+  padding: 16px;
+  font-size: 15px;
+  min-height: 52px;
+  cursor: pointer;
+}
+
+.card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(148,163,184,0.15);
+  border-radius: 16px;
+  padding: 18px;
+}
+
+.screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
+  gap: 14px;
+}
+
+.warning-banner {
+  background: linear-gradient(160deg, #FEF9E7, #FDE9C8);
+  border: 1px solid rgba(251,191,36,0.4);
+  border-radius: 12px;
+  padding: 12px 14px;
+  color: #7C2D12;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.error-banner {
+  background: linear-gradient(160deg, #FEE2E2, #FECACA);
+  border: 1px solid rgba(248,113,113,0.5);
+  border-radius: 12px;
+  padding: 12px 14px;
+  color: #7F1D1D;
+  font-size: 12px;
+  line-height: 1.6;
+}
