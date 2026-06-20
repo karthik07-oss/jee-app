@@ -25,6 +25,14 @@
   --paper: #FFFFFF;
   --muted: rgba(255,255,255,0.68);
 
+  /* These were referenced by setup.js / importPaper.js but never defined,
+     which made several borders silently disappear (an invalid var() value
+     makes the whole shorthand declaration invalid, not just fall back to
+     nothing visible). Defined here using the same glass language as the
+     rest of the system. */
+  --line: rgba(255,255,255,0.14);
+  --line-strong: rgba(255,255,255,0.30);
+
   --amber: #FBBF24;
   --good: #2DD4BF;
   --bad: #FB7185;
@@ -103,6 +111,12 @@ html, body {
   max-width: 640px;
   width: 100%;
   margin: 0 auto;
+  animation: screenEnter 0.36s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes screenEnter {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .eyebrow {
@@ -357,9 +371,154 @@ textarea.mono-input { font-family: "JetBrains Mono", ui-monospace, monospace; }
   box-shadow: 0 0 12px rgba(129,140,248,0.6);
 }
 
+/* ── Score ring (Result screen hero) ─────────────────────────────────── */
+.score-ring-wrap {
+  position: relative;
+  width: 196px;
+  height: 196px;
+  margin: 6px auto 2px;
+}
+.score-ring-wrap svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.score-ring-track { fill: none; stroke: rgba(255,255,255,0.12); stroke-width: 14; }
+.score-ring-fill {
+  fill: none;
+  stroke-width: 14;
+  stroke-linecap: round;
+  stroke: url(#ringGradient);
+  transition: stroke-dashoffset 1s cubic-bezier(0.22, 1, 0.36, 1);
+  filter: drop-shadow(0 0 14px rgba(129,140,248,0.55));
+}
+.score-ring-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.score-ring-total {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 38px;
+  font-weight: 900;
+  line-height: 1;
+}
+.score-ring-max { font-size: 12px; color: var(--muted); margin-top: 4px; font-weight: 600; }
+
+.celebrate-glow {
+  position: absolute;
+  inset: -30px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(45,212,191,0.35), transparent 70%);
+  animation: celebratePulse 1.8s ease-out 1;
+  pointer-events: none;
+}
+@keyframes celebratePulse {
+  0% { opacity: 0; transform: scale(0.7); }
+  35% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.25); }
+}
+
+/* ── Subject breakdown bars ───────────────────────────────────────────── */
+.subject-bar-block + .subject-bar-block { margin-top: 14px; }
+.subject-bar-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+  font-size: 12.5px;
+}
+.subject-bar-head .name { font-weight: 700; }
+.subject-bar-head .marks { font-family: "JetBrains Mono", monospace; color: var(--muted); font-size: 11.5px; }
+.subject-bar-track {
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.10);
+  overflow: hidden;
+}
+.subject-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #A78BFA, var(--focus));
+  width: 0%;
+  transition: width 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: 0 0 10px rgba(129,140,248,0.55);
+}
+.subject-bar-fill.bad { background: linear-gradient(90deg, #FDA4AF, var(--bad)); box-shadow: 0 0 10px rgba(251,113,133,0.45); }
+
+/* ── Review list (Result screen) ─────────────────────────────────────── */
+.review-item {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 13px 14px;
+  margin-bottom: 8px;
+  background: rgba(255,255,255,0.04);
+}
+.review-item-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  gap: 8px;
+}
+.review-badge {
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 3px 9px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  flex-shrink: 0;
+}
+.review-badge.correct { background: rgba(45,212,191,0.18); color: var(--good); }
+.review-badge.wrong { background: rgba(251,113,133,0.18); color: var(--bad); }
+.review-badge.partial { background: rgba(251,191,36,0.18); color: var(--amber); }
+.review-badge.unattempted { background: rgba(255,255,255,0.10); color: var(--muted); }
+.review-q-text { font-size: 12.5px; color: var(--muted); line-height: 1.5; margin: 0 0 8px; }
+.review-answer-row { display: flex; gap: 16px; font-size: 12px; }
+.review-answer-row .label { color: var(--muted); margin-right: 4px; }
+.review-answer-row .val { font-family: "JetBrains Mono", monospace; font-weight: 700; }
+.review-answer-row .val.good { color: var(--good); }
+.review-answer-row .val.bad { color: var(--bad); }
+
+/* ── Line charts (Progress screen) ───────────────────────────────────── */
+.chart-card svg { width: 100%; height: auto; display: block; }
+.chart-line { fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.chart-point { fill: var(--ink); stroke-width: 2; }
+.chart-legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 10px; }
+.chart-legend-item { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); font-weight: 600; }
+.chart-legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.chart-empty-axis { stroke: rgba(255,255,255,0.10); stroke-width: 1; }
+
+/* ── Empty state ──────────────────────────────────────────────────────── */
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 10px;
+  padding: 40px 20px;
+}
+.empty-state-icon { font-size: 38px; opacity: 0.8; }
+.empty-state h2 { margin: 0; font-size: 16px; font-weight: 800; }
+
+/* ── Recent attempts list (Progress screen) ──────────────────────────── */
+.attempt-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 4px;
+  border-bottom: 1px solid var(--line);
+}
+.attempt-row:last-child { border-bottom: none; }
+.attempt-mode { font-size: 13px; font-weight: 700; }
+.attempt-date { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.attempt-score { font-family: "JetBrains Mono", monospace; font-weight: 800; font-size: 15px; }
+
 /* ── Accessibility ────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
 }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-                          
