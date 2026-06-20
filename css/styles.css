@@ -1,37 +1,55 @@
-/* styles.css — design system for JEE Exam Simulator.
+/* styles.css — design system for JEE Exam Simulator, v2: vibrant glass.
    ────────────────────────────────────────────────────────────────────────
-   Concept: this app's one job is to feel like sitting a real proctored exam,
-   then like opening a results sheet afterward. So the visual language is
-   borrowed from the actual artifacts of that world — OMR answer bubbles,
-   monospace question numbering, the amber "in-progress" marker pen color
-   used on real answer keys — rather than a generic mobile-app dashboard.
+   Direction: energetic, premium, glassmorphic. A rich animated-feeling
+   gradient sits behind everything; UI surfaces are frosted glass cards
+   that float above it rather than flat opaque boxes. The OMR answer-bubble
+   concept stays as the signature interaction (it's distinctive and on-theme
+   for an exam app) but rendered with real depth, glow, and saturation
+   instead of muted flat colors.
 */
 
 * { box-sizing: border-box; }
 
 :root {
-  --ink: #0B1020;
-  --ink-raised: #131A2E;
-  --ink-raised-2: #181F36;
-  --paper: #F8FAFC;
-  --muted: #94A3B8;
-  --line: rgba(148,163,184,0.16);
-  --line-strong: rgba(148,163,184,0.28);
-  --amber: #FCA311;
-  --good: #34D399;
-  --bad: #F87171;
-  --focus: #4F6EF7;
-  --shadow-soft: 0 8px 24px rgba(0,0,0,0.35);
-  --shadow-lift: 0 12px 32px rgba(0,0,0,0.45);
+  /* Background gradient stops — purple → indigo → magenta, shifting per screen */
+  --grad-1: #7C3AED;
+  --grad-2: #4338CA;
+  --grad-3: #DB2777;
+  --ink: #0B0A1F;
+
+  --glass-bg: rgba(255,255,255,0.10);
+  --glass-bg-strong: rgba(255,255,255,0.16);
+  --glass-border: rgba(255,255,255,0.22);
+  --glass-border-strong: rgba(255,255,255,0.35);
+
+  --paper: #FFFFFF;
+  --muted: rgba(255,255,255,0.68);
+
+  --amber: #FBBF24;
+  --good: #2DD4BF;
+  --bad: #FB7185;
+  --focus: #818CF8;
+
+  --shadow-soft: 0 8px 32px rgba(20,10,50,0.35);
+  --shadow-lift: 0 16px 40px rgba(20,10,50,0.45);
+  --shadow-glow-focus: 0 8px 24px rgba(129,140,248,0.45);
+  --shadow-glow-good: 0 8px 24px rgba(45,212,191,0.4);
+  --shadow-glow-bad: 0 8px 24px rgba(251,113,133,0.4);
+  --shadow-glow-amber: 0 8px 24px rgba(251,191,36,0.4);
 }
+
+* { box-sizing: border-box; }
 
 html, body {
   margin: 0;
   padding: 0;
   height: 100%;
   background:
-    radial-gradient(ellipse 900px 500px at 50% -10%, rgba(79,110,247,0.12), transparent),
+    radial-gradient(ellipse 900px 700px at 15% -5%, rgba(124,58,237,0.55), transparent 60%),
+    radial-gradient(ellipse 800px 600px at 100% 10%, rgba(219,39,119,0.45), transparent 55%),
+    radial-gradient(ellipse 1000px 800px at 50% 110%, rgba(67,56,202,0.5), transparent 60%),
     var(--ink);
+  background-attachment: fixed;
   color: var(--paper);
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   -webkit-tap-highlight-color: transparent;
@@ -57,17 +75,21 @@ html, body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 14px;
+  gap: 16px;
 }
 .boot-logo {
   font-family: "JetBrains Mono", ui-monospace, monospace;
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 800;
   letter-spacing: 6px;
-  color: var(--muted);
-  border: 1px solid var(--line);
-  padding: 10px 18px;
-  border-radius: 4px;
+  color: #fff;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 14px 24px;
+  border-radius: 16px;
+  box-shadow: var(--shadow-soft);
 }
 .boot-screen p { color: var(--muted); font-size: 13px; margin: 0; }
 
@@ -86,37 +108,45 @@ html, body {
 .eyebrow {
   font-family: "JetBrains Mono", ui-monospace, monospace;
   font-size: 11px;
-  letter-spacing: 2px;
+  letter-spacing: 2.5px;
   text-transform: uppercase;
   color: var(--amber);
   margin: 0;
+  text-shadow: 0 0 16px rgba(251,191,36,0.5);
 }
 
 h1.page-title {
-  font-size: 21px;
-  font-weight: 800;
+  font-size: 26px;
+  font-weight: 900;
   margin: 2px 0 0;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #fff, #E0D4FF);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .subtext {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 13.5px;
   margin: 0;
   line-height: 1.6;
 }
 
+/* ── Glass card — the core surface used everywhere ───────────────────── */
 .card {
-  background: linear-gradient(160deg, var(--ink-raised-2), var(--ink-raised));
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  padding: 18px;
+  background: linear-gradient(160deg, var(--glass-bg-strong), var(--glass-bg));
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 20px;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   box-shadow: var(--shadow-soft);
 }
 
 .divider {
   border: none;
-  border-top: 1px dashed var(--line);
+  border-top: 1px dashed var(--glass-border);
   margin: 4px 0;
 }
 
@@ -124,150 +154,163 @@ h1.page-title {
 button { font-family: inherit; -webkit-tap-highlight-color: transparent; cursor: pointer; }
 
 .btn-primary {
-  background: linear-gradient(160deg, #6B82FF, var(--focus) 60%, #3D52D6);
-  border: 1px solid rgba(255,255,255,0.25);
-  border-radius: 14px;
+  background: linear-gradient(135deg, #A78BFA, var(--focus) 50%, #6366F1);
+  border: 1px solid rgba(255,255,255,0.4);
+  border-radius: 16px;
   color: #fff;
-  font-weight: 700;
-  padding: 16px;
-  font-size: 15px;
-  min-height: 52px;
-  box-shadow: 0 8px 20px rgba(79,110,247,0.35);
+  font-weight: 800;
+  padding: 17px;
+  font-size: 15.5px;
+  min-height: 54px;
+  box-shadow: var(--shadow-glow-focus);
   transition: transform 0.08s ease, opacity 0.15s ease, box-shadow 0.15s ease;
 }
-.btn-primary:active { transform: scale(0.98); box-shadow: 0 4px 12px rgba(79,110,247,0.3); }
+.btn-primary:active { transform: scale(0.97); box-shadow: 0 4px 14px rgba(129,140,248,0.35); }
 .btn-primary:disabled { opacity: 0.5; box-shadow: none; }
 
 .btn-secondary {
-  background: transparent;
-  border: 1px solid var(--line);
-  border-radius: 12px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
   color: var(--paper);
-  font-weight: 600;
-  padding: 14px 16px;
+  font-weight: 700;
+  padding: 15px 16px;
   font-size: 14px;
-  min-height: 48px;
-  transition: border-color 0.15s ease, background 0.15s ease;
+  min-height: 50px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.08s ease;
 }
-.btn-secondary:active { background: rgba(255,255,255,0.04); }
+.btn-secondary:active { background: var(--glass-bg-strong); transform: scale(0.97); }
+.btn-secondary:disabled { opacity: 0.45; }
 
 .btn-ghost {
   background: transparent;
   border: none;
   color: var(--muted);
-  font-weight: 600;
-  font-size: 13px;
+  font-weight: 700;
+  font-size: 13.5px;
   padding: 8px 4px;
 }
 
 .btn-danger {
-  background: rgba(248,113,113,0.12);
-  border: 1px solid rgba(248,113,113,0.4);
-  color: var(--bad);
-  border-radius: 12px;
-  font-weight: 700;
-  padding: 14px 16px;
-  min-height: 48px;
+  background: linear-gradient(135deg, #FB7185, #E11D48);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: #fff;
+  border-radius: 16px;
+  font-weight: 800;
+  padding: 15px 16px;
+  min-height: 50px;
+  box-shadow: var(--shadow-glow-bad);
 }
 
-/* ── OMR-style answer bubbles ─────────────────────────────────────────── */
+/* ── OMR-style answer bubbles — signature element, now with real glow ──── */
 .omr-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 4px;
+  gap: 12px;
+  padding: 12px 6px;
 }
 .omr-bubble {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  border: 2px solid var(--line-strong);
+  border: 2px solid var(--glass-border-strong);
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: "JetBrains Mono", ui-monospace, monospace;
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 800;
   color: var(--muted);
   flex-shrink: 0;
-  background: rgba(255,255,255,0.02);
-  transition: all 0.14s ease;
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  transition: all 0.16s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .omr-bubble.selected {
-  background: linear-gradient(160deg, #6B82FF, var(--focus));
-  border-color: var(--focus);
+  background: linear-gradient(135deg, #A78BFA, var(--focus));
+  border-color: rgba(255,255,255,0.5);
   color: #fff;
-  box-shadow: 0 4px 14px rgba(79,110,247,0.4);
-  transform: scale(1.06);
+  box-shadow: var(--shadow-glow-focus);
+  transform: scale(1.12);
 }
 .omr-bubble.correct {
-  background: linear-gradient(160deg, #4FE3B0, var(--good));
-  border-color: var(--good);
-  color: #06281C;
-  box-shadow: 0 4px 14px rgba(52,211,153,0.35);
+  background: linear-gradient(135deg, #5EEAD4, var(--good));
+  border-color: rgba(255,255,255,0.5);
+  color: #042F2A;
+  box-shadow: var(--shadow-glow-good);
+  transform: scale(1.08);
 }
 .omr-bubble.incorrect {
-  background: linear-gradient(160deg, #FB8B8B, var(--bad));
-  border-color: var(--bad);
-  color: #2A0A0A;
-  box-shadow: 0 4px 14px rgba(248,113,113,0.35);
+  background: linear-gradient(135deg, #FDA4AF, var(--bad));
+  border-color: rgba(255,255,255,0.5);
+  color: #4C0519;
+  box-shadow: var(--shadow-glow-bad);
 }
-.omr-option-text { font-size: 14px; flex: 1; }
+.omr-option-text { font-size: 14.5px; flex: 1; font-weight: 500; }
 
 /* ── Question number badge ───────────────────────────────────────────── */
 .q-number {
   font-family: "JetBrains Mono", ui-monospace, monospace;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--ink);
-  background: var(--amber);
-  border-radius: 6px;
-  padding: 3px 8px;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #2D1B69;
+  background: linear-gradient(135deg, #FDE68A, var(--amber));
+  border-radius: 8px;
+  padding: 4px 10px;
   display: inline-block;
+  box-shadow: var(--shadow-glow-amber);
 }
 
 /* ── Banners ──────────────────────────────────────────────────────────── */
 .warning-banner {
-  background: rgba(252,163,17,0.1);
-  border: 1px solid rgba(252,163,17,0.35);
-  border-radius: 12px;
-  padding: 13px 14px;
-  color: #FDE68A;
-  font-size: 12.5px;
+  background: linear-gradient(135deg, rgba(251,191,36,0.22), rgba(251,191,36,0.08));
+  border: 1px solid rgba(251,191,36,0.5);
+  border-radius: 16px;
+  padding: 14px 16px;
+  color: #FEF3C7;
+  font-size: 13px;
   line-height: 1.6;
+  backdrop-filter: blur(16px);
 }
 .error-banner {
-  background: rgba(248,113,113,0.1);
-  border: 1px solid rgba(248,113,113,0.35);
-  border-radius: 12px;
-  padding: 13px 14px;
-  color: #FCA5A5;
-  font-size: 12.5px;
+  background: linear-gradient(135deg, rgba(251,113,133,0.22), rgba(251,113,133,0.08));
+  border: 1px solid rgba(251,113,133,0.5);
+  border-radius: 16px;
+  padding: 14px 16px;
+  color: #FFE4E6;
+  font-size: 13px;
   line-height: 1.6;
+  backdrop-filter: blur(16px);
 }
 .success-banner {
-  background: rgba(52,211,153,0.1);
-  border: 1px solid rgba(52,211,153,0.35);
-  border-radius: 12px;
-  padding: 13px 14px;
-  color: #6EE7B7;
-  font-size: 12.5px;
+  background: linear-gradient(135deg, rgba(45,212,191,0.22), rgba(45,212,191,0.08));
+  border: 1px solid rgba(45,212,191,0.5);
+  border-radius: 16px;
+  padding: 14px 16px;
+  color: #CCFBF1;
+  font-size: 13px;
   line-height: 1.6;
+  backdrop-filter: blur(16px);
 }
 
 /* ── Form fields ──────────────────────────────────────────────────────── */
 textarea, input[type="text"], select {
-  background: rgba(255,255,255,0.04);
-  border: 1px solid var(--line);
-  border-radius: 10px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
   color: var(--paper);
-  padding: 11px 12px;
-  font-size: 13px;
+  padding: 13px 14px;
+  font-size: 13.5px;
   font-family: inherit;
+  backdrop-filter: blur(12px);
 }
+textarea::placeholder, input::placeholder { color: rgba(255,255,255,0.4); }
 textarea:focus, input[type="text"]:focus, select:focus {
   outline: 2px solid var(--focus);
   outline-offset: 1px;
+  background: rgba(255,255,255,0.12);
 }
 textarea.mono-input { font-family: "JetBrains Mono", ui-monospace, monospace; }
 
@@ -275,40 +318,43 @@ textarea.mono-input { font-family: "JetBrains Mono", ui-monospace, monospace; }
 .stat-row { display: flex; gap: 10px; }
 .stat {
   flex: 1;
-  background: var(--ink-raised);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 12px;
+  background: linear-gradient(160deg, var(--glass-bg-strong), var(--glass-bg));
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 14px;
   text-align: center;
+  backdrop-filter: blur(20px);
 }
 .stat-value {
   font-family: "JetBrains Mono", ui-monospace, monospace;
-  font-size: 20px;
-  font-weight: 800;
+  font-size: 22px;
+  font-weight: 900;
 }
 .stat-label {
   font-size: 10.5px;
   color: var(--muted);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-top: 2px;
+  letter-spacing: 0.6px;
+  margin-top: 3px;
+  font-weight: 600;
 }
-.stat-value.good { color: var(--good); }
-.stat-value.bad { color: var(--bad); }
-.stat-value.amber { color: var(--amber); }
+.stat-value.good { color: var(--good); text-shadow: 0 0 20px rgba(45,212,191,0.5); }
+.stat-value.bad { color: var(--bad); text-shadow: 0 0 20px rgba(251,113,133,0.5); }
+.stat-value.amber { color: var(--amber); text-shadow: 0 0 20px rgba(251,191,36,0.5); }
 
-/* ── Progress bar (used by step-through flows like paper review) ───────── */
+/* ── Progress bar ─────────────────────────────────────────────────────── */
 .progress-track {
-  height: 6px;
+  height: 8px;
   border-radius: 999px;
-  background: rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.12);
   overflow: hidden;
 }
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--focus), #6B82FF);
+  background: linear-gradient(90deg, #A78BFA, var(--focus), #818CF8);
   border-radius: 999px;
   transition: width 0.25s ease;
+  box-shadow: 0 0 12px rgba(129,140,248,0.6);
 }
 
 /* ── Accessibility ────────────────────────────────────────────────────── */
@@ -316,4 +362,4 @@ textarea.mono-input { font-family: "JetBrains Mono", ui-monospace, monospace; }
   * { transition: none !important; animation: none !important; }
 }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-   
+                          
