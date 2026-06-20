@@ -12,7 +12,7 @@
 //
 // CACHE_VERSION must be bumped any time any cached file changes, or the
 // browser will keep serving the old cached versions forever.
-const CACHE_VERSION = "jee-app-v2";
+const CACHE_VERSION = "jee-app-v4";
 
 const APP_SHELL = [
   "./",
@@ -23,8 +23,10 @@ const APP_SHELL = [
   "./js/db.js",
   "./js/scoring.js",
   "./js/parser.js",
+  "./js/timer.js",
   "./js/screens/setup.js",
   "./js/screens/importPaper.js",
+  "./js/screens/exam.js",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
   "./icons/icon-maskable-192.png",
@@ -92,3 +94,4 @@ self.addEventListener("fetch", (event) => {
     })
   );
 });
+  
