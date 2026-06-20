@@ -380,8 +380,22 @@ async function submitExam(navigate, { autoSubmitted }) {
   }
 
   const paperId = paper.id;
+  const paperMode = paper.mode;
+  const paperNum = paper.paperNum || null;
+  // Snapshot answers before nulling runtime — the result screen has no other
+  // way to get per-question detail since the session row was just deleted,
+  // and it can't wait on another DB round-trip for data we already have.
+  const answersSnapshot = { ...answers };
   runtime = null;
-  navigate("result", { paperId, historyOk, autoSubmitted });
+  navigate("result", {
+    paperId,
+    mode: paperMode,
+    paperNum,
+    historyOk,
+    autoSubmitted,
+    answers: answersSnapshot,
+    score,
+  });
 }
 
 function stopTimer() {
@@ -423,4 +437,5 @@ function isAnswered(val) {
 function escapeHtml(str) {
   if (!str) return "";
   return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-}
+    }
+    
