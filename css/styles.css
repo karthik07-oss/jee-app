@@ -11,21 +11,27 @@
 
 :root {
   --ink: #0B1020;
-  --ink-raised: #11172A;
+  --ink-raised: #131A2E;
+  --ink-raised-2: #181F36;
   --paper: #F8FAFC;
   --muted: #94A3B8;
-  --line: rgba(148,163,184,0.18);
+  --line: rgba(148,163,184,0.16);
+  --line-strong: rgba(148,163,184,0.28);
   --amber: #FCA311;
   --good: #34D399;
   --bad: #F87171;
   --focus: #4F6EF7;
+  --shadow-soft: 0 8px 24px rgba(0,0,0,0.35);
+  --shadow-lift: 0 12px 32px rgba(0,0,0,0.45);
 }
 
 html, body {
   margin: 0;
   padding: 0;
   height: 100%;
-  background: var(--ink);
+  background:
+    radial-gradient(ellipse 900px 500px at 50% -10%, rgba(79,110,247,0.12), transparent),
+    var(--ink);
   color: var(--paper);
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   -webkit-tap-highlight-color: transparent;
@@ -101,10 +107,11 @@ h1.page-title {
 }
 
 .card {
-  background: var(--ink-raised);
+  background: linear-gradient(160deg, var(--ink-raised-2), var(--ink-raised));
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: 16px;
   padding: 18px;
+  box-shadow: var(--shadow-soft);
 }
 
 .divider {
@@ -117,18 +124,19 @@ h1.page-title {
 button { font-family: inherit; -webkit-tap-highlight-color: transparent; cursor: pointer; }
 
 .btn-primary {
-  background: var(--focus);
-  border: 1px solid rgba(255,255,255,0.15);
-  border-radius: 12px;
+  background: linear-gradient(160deg, #6B82FF, var(--focus) 60%, #3D52D6);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 14px;
   color: #fff;
   font-weight: 700;
   padding: 16px;
   font-size: 15px;
   min-height: 52px;
-  transition: transform 0.08s ease, opacity 0.15s ease;
+  box-shadow: 0 8px 20px rgba(79,110,247,0.35);
+  transition: transform 0.08s ease, opacity 0.15s ease, box-shadow 0.15s ease;
 }
-.btn-primary:active { transform: scale(0.98); }
-.btn-primary:disabled { opacity: 0.5; }
+.btn-primary:active { transform: scale(0.98); box-shadow: 0 4px 12px rgba(79,110,247,0.3); }
+.btn-primary:disabled { opacity: 0.5; box-shadow: none; }
 
 .btn-secondary {
   background: transparent;
@@ -170,10 +178,10 @@ button { font-family: inherit; -webkit-tap-highlight-color: transparent; cursor:
   padding: 10px 4px;
 }
 .omr-bubble {
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  border: 2px solid var(--line);
+  border: 2px solid var(--line-strong);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -182,22 +190,27 @@ button { font-family: inherit; -webkit-tap-highlight-color: transparent; cursor:
   font-weight: 700;
   color: var(--muted);
   flex-shrink: 0;
-  transition: all 0.12s ease;
+  background: rgba(255,255,255,0.02);
+  transition: all 0.14s ease;
 }
 .omr-bubble.selected {
-  background: var(--focus);
+  background: linear-gradient(160deg, #6B82FF, var(--focus));
   border-color: var(--focus);
   color: #fff;
+  box-shadow: 0 4px 14px rgba(79,110,247,0.4);
+  transform: scale(1.06);
 }
 .omr-bubble.correct {
-  background: var(--good);
+  background: linear-gradient(160deg, #4FE3B0, var(--good));
   border-color: var(--good);
   color: #06281C;
+  box-shadow: 0 4px 14px rgba(52,211,153,0.35);
 }
 .omr-bubble.incorrect {
-  background: var(--bad);
+  background: linear-gradient(160deg, #FB8B8B, var(--bad));
   border-color: var(--bad);
   color: #2A0A0A;
+  box-shadow: 0 4px 14px rgba(248,113,113,0.35);
 }
 .omr-option-text { font-size: 14px; flex: 1; }
 
@@ -284,8 +297,23 @@ textarea.mono-input { font-family: "JetBrains Mono", ui-monospace, monospace; }
 .stat-value.bad { color: var(--bad); }
 .stat-value.amber { color: var(--amber); }
 
+/* ── Progress bar (used by step-through flows like paper review) ───────── */
+.progress-track {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--focus), #6B82FF);
+  border-radius: 999px;
+  transition: width 0.25s ease;
+}
+
 /* ── Accessibility ────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
 }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+   
