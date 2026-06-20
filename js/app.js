@@ -22,10 +22,9 @@ async function registerServiceWorker() {
 const routes = {
   setup: () => import("./screens/setup.js").then((m) => m.renderSetup),
   import: () => import("./screens/importPaper.js").then((m) => m.renderImportPaper),
-  // Remaining screens are added as they're built:
-  // exam: () => import("./screens/exam.js").then((m) => m.renderExam),
-  // result: () => import("./screens/result.js").then((m) => m.renderResult),
-  // progress: () => import("./screens/progress.js").then((m) => m.renderProgress),
+  exam: () => import("./screens/exam.js").then((m) => m.renderExam),
+  result: () => import("./screens/result.js").then((m) => m.renderResult),
+  progress: () => import("./screens/progress.js").then((m) => m.renderProgress),
 };
 
 let currentParams = {};
