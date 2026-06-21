@@ -8,6 +8,12 @@
 import { AIConfigDB, AICacheDB } from "./db.js";
 
 export const PROVIDER_PRESETS = {
+  gemini: {
+    label: "Google Gemini (AI Studio) — Recommended",
+    baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai/",
+    model: "gemini-2.5-flash",
+    keyHint: "From aistudio.google.com — sign in with your Google account",
+  },
   nvidia: {
     label: "NVIDIA NIM — Nemotron 3 Ultra",
     baseUrl: "https://integrate.api.nvidia.com/v1",
@@ -35,9 +41,9 @@ export const PROVIDER_PRESETS = {
 };
 
 const DEFAULT_CONFIG = {
-  preset: "nvidia",
-  baseUrl: PROVIDER_PRESETS.nvidia.baseUrl,
-  model: PROVIDER_PRESETS.nvidia.model,
+  preset: "gemini",
+  baseUrl: PROVIDER_PRESETS.gemini.baseUrl,
+  model: PROVIDER_PRESETS.gemini.model,
   apiKey: "",
 };
 
