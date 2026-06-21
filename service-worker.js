@@ -12,7 +12,7 @@
 //
 // CACHE_VERSION must be bumped any time any cached file changes, or the
 // browser will keep serving the old cached versions forever.
-const CACHE_VERSION = "jee-app-v9";
+const CACHE_VERSION = "jee-app-v10";
 
 const APP_SHELL = [
   "./",
