@@ -142,6 +142,22 @@ export const SettingsDB = {
   },
 };
 
+// AI config and per-question explanation cache both live in the same
+// generic SETTINGS store (different key namespace) rather than adding a new
+// IndexedDB object store — that would need a DB_VERSION bump and an
+// upgrade migration, which isn't worth it for two small key/value uses.
+export const AIConfigDB = {
+  _KEY: "ai_config",
+  get: () => SettingsDB.get(AIConfigDB._KEY),
+  set: (config) => SettingsDB.set(AIConfigDB._KEY, config),
+};
+
+export const AICacheDB = {
+  _prefix: "ai_cache:",
+  get: (id) => SettingsDB.get(AICacheDB._prefix + id),
+  set: (id, value) => SettingsDB.set(AICacheDB._prefix + id, value),
+};
+
 // Exposed for diagnostics/debugging from the browser console if something
 // ever looks wrong — e.g. `await DB.debugDump()` in devtools.
 export const DB = {

@@ -147,6 +147,18 @@ export function parsePaperText(rawText, { paperId, mode, paperNum } = {}) {
   return { id: paperId, mode, paperNum, questions, warnings };
 }
 
+/**
+ * Shared "is this question safe to save" check — used by the regex parser
+ * internally, by manual edits in the review screen, and by the AI parser
+ * path, so all three paths agree on what counts as incomplete.
+ */
+export function computeNeedsReview(q) {
+  const hasAnswer = q.type === "multi"
+    ? Array.isArray(q.correctAnswer) && q.correctAnswer.length > 0
+    : !!q.correctAnswer;
+  return !q.subject || !hasAnswer || !q.questionText;
+}
+
 /** Groups a flat question list by subject, for the auto-split-by-subject view. */
 export function groupBySubject(questions) {
   const groups = {};
@@ -156,4 +168,4 @@ export function groupBySubject(questions) {
     groups[key].push(q);
   }
   return groups;
-    }
+}

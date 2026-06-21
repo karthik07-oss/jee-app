@@ -25,6 +25,8 @@ const routes = {
   exam: () => import("./screens/exam.js").then((m) => m.renderExam),
   result: () => import("./screens/result.js").then((m) => m.renderResult),
   progress: () => import("./screens/progress.js").then((m) => m.renderProgress),
+  settings: () => import("./screens/settings.js").then((m) => m.renderSettings),
+  generate: () => import("./screens/generate.js").then((m) => m.renderGenerate),
 };
 
 let currentParams = {};
