@@ -12,7 +12,7 @@
 //
 // CACHE_VERSION must be bumped any time any cached file changes, or the
 // browser will keep serving the old cached versions forever.
-const CACHE_VERSION = "jee-app-v5";
+const CACHE_VERSION = "jee-app-v9";
 
 const APP_SHELL = [
   "./",
@@ -21,6 +21,7 @@ const APP_SHELL = [
   "./css/styles.css",
   "./js/app.js",
   "./js/db.js",
+  "./js/ai.js",
   "./js/scoring.js",
   "./js/parser.js",
   "./js/timer.js",
@@ -29,6 +30,8 @@ const APP_SHELL = [
   "./js/screens/exam.js",
   "./js/screens/result.js",
   "./js/screens/progress.js",
+  "./js/screens/settings.js",
+  "./js/screens/generate.js",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
   "./icons/icon-maskable-192.png",
