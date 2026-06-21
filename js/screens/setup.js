@@ -1,8 +1,8 @@
-
 // screens/setup.js — entry screen: choose JEE Main or Advanced, see saved
 // papers, and either import a new one or start an existing one.
 
 import { PapersDB } from "../db.js";
+import { isAIConfigured } from "../ai.js";
 
 function formatDate(ts) {
   if (!ts) return "";
@@ -33,6 +33,13 @@ export async function renderSetup(container, { navigate }) {
     loadError = err;
   }
 
+  let aiReady = false;
+  try {
+    aiReady = await isAIConfigured();
+  } catch (err) {
+    aiReady = false;
+  }
+
   const mainPapers = papers.filter((p) => p.mode === "main");
   const advPapers = papers.filter((p) => p.mode === "advanced");
 
@@ -42,9 +49,17 @@ export async function renderSetup(container, { navigate }) {
 
   container.innerHTML = `
     <div class="screen">
-      <p class="eyebrow">JEE EXAM SIMULATOR</p>
-      <h1 class="page-title">Setup</h1>
+      <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+        <div>
+          <p class="eyebrow">JEE EXAM SIMULATOR</p>
+          <h1 class="page-title">Setup</h1>
+        </div>
+        <button class="btn-secondary" id="open-settings" style="padding:8px 12px; min-height:auto;" title="AI Settings">⚙️</button>
+      </div>
       <p class="subtext">Everything stays on this device — no account, no sync, no upload.</p>
+      <button type="button" id="ai-status-banner" style="text-align:left; border:none; background:none; padding:0; cursor:pointer;">
+        <span class="status-pill ${aiReady ? "ok" : "off"}"><span class="status-dot"></span>${aiReady ? "AI features ready" : "AI not set up — tap to add a key"}</span>
+      </button>
 
       ${errorHtml}
 
@@ -54,7 +69,10 @@ export async function renderSetup(container, { navigate }) {
           <span style="font-size:11px; color:var(--muted);">${mainPapers.length} paper${mainPapers.length === 1 ? "" : "s"}</span>
         </div>
         ${mainPapers.length ? mainPapers.map((p) => paperRow(p, navigate)).join("") : '<p class="subtext" style="margin:8px 0;">No papers yet.</p>'}
-        <button class="btn-secondary" id="import-main" style="width:100%; margin-top:10px;">＋ Import a Paper</button>
+        <div style="display:flex; gap:8px; margin-top:10px;">
+          <button class="btn-secondary" id="import-main" style="flex:1;">＋ Import a Paper</button>
+          <button class="btn-secondary" id="generate-main" style="flex:1;">✨ AI Generate</button>
+        </div>
       </div>
 
       <div class="card">
@@ -67,15 +85,24 @@ export async function renderSetup(container, { navigate }) {
           <button class="btn-secondary" id="import-adv-1" style="flex:1;">＋ Paper 1</button>
           <button class="btn-secondary" id="import-adv-2" style="flex:1;">＋ Paper 2</button>
         </div>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <button class="btn-secondary" id="generate-adv-1" style="flex:1;">✨ Generate P1</button>
+          <button class="btn-secondary" id="generate-adv-2" style="flex:1;">✨ Generate P2</button>
+        </div>
       </div>
 
       <button class="btn-primary" id="view-progress" style="width:100%; margin-top:auto;">📊 View Progress</button>
     </div>
   `;
 
+  container.querySelector("#open-settings").onclick = () => navigate("settings");
+  container.querySelector("#ai-status-banner").onclick = () => navigate("settings");
   container.querySelector("#import-main").onclick = () => navigate("import", { mode: "main" });
+  container.querySelector("#generate-main").onclick = () => navigate("generate", { mode: "main" });
   container.querySelector("#import-adv-1").onclick = () => navigate("import", { mode: "advanced", paperNum: 1 });
   container.querySelector("#import-adv-2").onclick = () => navigate("import", { mode: "advanced", paperNum: 2 });
+  container.querySelector("#generate-adv-1").onclick = () => navigate("generate", { mode: "advanced", paperNum: 1 });
+  container.querySelector("#generate-adv-2").onclick = () => navigate("generate", { mode: "advanced", paperNum: 2 });
   container.querySelector("#view-progress").onclick = () => navigate("progress");
 
   container.querySelectorAll(".start-paper-btn").forEach((btn) => {

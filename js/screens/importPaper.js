@@ -3,17 +3,39 @@
 // scrolling list of every question — far less overwhelming on a 75-question
 // paper, and matches how the person actually wants to work through fixes.
 
-import { parsePaperText } from "../parser.js";
+import { parsePaperText, computeNeedsReview } from "../parser.js";
 import { PapersDB } from "../db.js";
+import { aiChatJSON, isAIConfigured } from "../ai.js";
 
-let state = null; // { mode, paperNum, phase, rawText, parsed, reviewIdx }
+let state = null; // { mode, paperNum, phase, rawText, parsed, reviewIdx, parseSource, aiNotice }
 
 export async function renderImportPaper(container, { navigate, params }) {
   const mode = params.mode || "main";
   const paperNum = params.paperNum || (mode === "advanced" ? 1 : undefined);
 
-  if (!state || state.mode !== mode || state.paperNum !== paperNum) {
-    state = { mode, paperNum, phase: "paste", rawText: "", parsed: null, reviewIdx: 0 };
+  if (params.prefilledParsed) {
+    // Came from the AI Generate screen — skip straight to review. Cleared
+    // from `params` immediately after use: rerender() below reuses this
+    // exact same params object for every in-screen re-render (Save & Next,
+    // Previous, etc.), so leaving the flag set would silently reset all the
+    // user's edits back to the original AI output on every interaction.
+    const parsed = params.prefilledParsed;
+    delete params.prefilledParsed;
+    const firstFlagged = parsed.questions.findIndex((q) => q.needsReview);
+    state = {
+      mode, paperNum, phase: "review", rawText: "", parsed,
+      reviewIdx: firstFlagged >= 0 ? firstFlagged : 0,
+      parseSource: "ai-generated", aiNotice: null,
+    };
+  } else if (!state || state.mode !== mode || state.paperNum !== paperNum) {
+    state = { mode, paperNum, phase: "paste", rawText: "", parsed: null, reviewIdx: 0, parseSource: null, aiNotice: null };
+  }
+
+  let aiReady = false;
+  try {
+    aiReady = await isAIConfigured();
+  } catch (err) {
+    aiReady = false;
   }
 
   function rerender() {
@@ -21,7 +43,7 @@ export async function renderImportPaper(container, { navigate, params }) {
   }
 
   if (state.phase === "paste") {
-    renderPastePhase(container, { navigate, rerender, mode, paperNum });
+    renderPastePhase(container, { navigate, rerender, mode, paperNum, aiReady });
   } else {
     renderReviewPhase(container, { navigate, rerender, mode, paperNum });
   }
@@ -31,7 +53,7 @@ function paperLabel(mode, paperNum) {
   return mode === "advanced" ? `JEE Advanced · Paper ${paperNum}` : "JEE Main";
 }
 
-function renderPastePhase(container, { navigate, rerender, mode, paperNum }) {
+function renderPastePhase(container, { navigate, rerender, mode, paperNum, aiReady }) {
   container.innerHTML = `
     <div class="screen">
       <button class="btn-ghost" id="back" style="align-self:flex-start; padding:0;">← Back to Setup</button>
@@ -48,22 +70,110 @@ function renderPastePhase(container, { navigate, rerender, mode, paperNum }) {
           style="width:100%; resize:vertical;">${state.rawText}</textarea>
       </div>
 
-      <button class="btn-primary" id="parse-btn" style="width:100%;">Parse Questions →</button>
+      <button class="btn-primary" id="parse-ai-btn" style="width:100%;">✨ Parse with AI</button>
+      ${aiReady ? "" : `<p class="subtext" style="text-align:center; margin-top:-6px;">No AI key set up yet — this will fall back to standard parsing. <span id="open-settings-link" style="color:var(--focus); text-decoration:underline; cursor:pointer;">Add one in Settings</span></p>`}
+      <button class="btn-secondary" id="parse-btn" style="width:100%;">Parse without AI</button>
+      <div id="ai-parse-error"></div>
     </div>
   `;
 
   container.querySelector("#back").onclick = () => navigate("setup");
+
+  const settingsLink = container.querySelector("#open-settings-link");
+  if (settingsLink) settingsLink.onclick = () => navigate("settings");
+
   container.querySelector("#parse-btn").onclick = () => {
     const text = container.querySelector("#paper-text").value;
     state.rawText = text;
     state.parsed = parsePaperText(text, { paperId: `${mode}_${paperNum || 1}_${Date.now()}`, mode, paperNum });
+    state.parseSource = "regex";
+    state.aiNotice = null;
     state.phase = "review";
-    // Jump straight to the first flagged question if there is one — that's
-    // almost always more useful than starting at Q1 when Q1 is already fine.
     const firstFlagged = state.parsed.questions.findIndex((q) => q.needsReview);
     state.reviewIdx = firstFlagged >= 0 ? firstFlagged : 0;
     rerender();
   };
+
+  container.querySelector("#parse-ai-btn").onclick = async () => {
+    const text = container.querySelector("#paper-text").value;
+    state.rawText = text;
+    const aiBtn = container.querySelector("#parse-ai-btn");
+    const errSlot = container.querySelector("#ai-parse-error");
+    errSlot.innerHTML = "";
+
+    if (!text || !text.trim()) {
+      errSlot.innerHTML = `<div class="warning-banner">Paste some paper text first.</div>`;
+      return;
+    }
+
+    aiBtn.disabled = true;
+    aiBtn.textContent = "Asking AI…";
+    const paperId = `${mode}_${paperNum || 1}_${Date.now()}`;
+
+    try {
+      const aiQuestions = await parseWithAI(text, { paperId });
+      state.parsed = { id: paperId, mode, paperNum, questions: aiQuestions, warnings: [] };
+      state.parseSource = "ai";
+      state.aiNotice = null;
+    } catch (err) {
+      // Never a dead end — fall back to the always-available regex parser.
+      state.parsed = parsePaperText(text, { paperId, mode, paperNum });
+      state.parseSource = "regex";
+      state.aiNotice = `AI parsing didn't work this time (${err.message}) — used standard parsing instead. Nothing was lost.`;
+    }
+
+    state.phase = "review";
+    const firstFlagged = state.parsed.questions.findIndex((q) => q.needsReview);
+    state.reviewIdx = firstFlagged >= 0 ? firstFlagged : 0;
+    rerender();
+  };
+}
+
+/**
+ * Asks the configured AI model to extract questions as strict JSON. Throws
+ * on any failure — the caller (above) is responsible for falling back to
+ * the regex parser, this function never silently returns partial/bad data.
+ */
+async function parseWithAI(rawText, { paperId }) {
+  const messages = [
+    {
+      role: "system",
+      content:
+        "You are a precise data-extraction engine for JEE exam papers. Given raw pasted exam text, " +
+        "extract every question into strict JSON and return ONLY a JSON array — no prose, no markdown " +
+        "code fences, no explanation before or after. Each array element must have exactly these fields: " +
+        'number (integer), subject (one of "Physics", "Chemistry", "Mathematics", or null if unclear), ' +
+        'type (one of "single", "multi", "numerical"), questionText (string), options (array of ' +
+        "{label, text} objects with label as a single capital letter — empty array for numerical questions), " +
+        'correctAnswer (a single letter string like "A" for single-correct, an array of letters like ' +
+        '["A","C"] for multi-correct, or the numeric value as a string for numerical — use null if you ' +
+        "cannot confidently determine it from the text). Never guess a field you're unsure of — use null instead.",
+    },
+    { role: "user", content: rawText },
+  ];
+
+  const result = await aiChatJSON(messages, { maxTokens: 16000, timeoutMs: 90000 });
+  if (!Array.isArray(result) || result.length === 0) {
+    throw new Error("AI didn't return any questions");
+  }
+
+  return result.map((item, i) => {
+    const q = {
+      id: `${paperId}_q${i + 1}`,
+      number: Number.isFinite(item.number) ? item.number : i + 1,
+      subject: item.subject || null,
+      type: ["single", "multi", "numerical"].includes(item.type) ? item.type : "single",
+      questionText: typeof item.questionText === "string" ? item.questionText.trim() : "",
+      options: Array.isArray(item.options)
+        ? item.options
+            .filter((o) => o && o.label && o.text)
+            .map((o) => ({ label: String(o.label).toUpperCase(), text: String(o.text) }))
+        : [],
+      correctAnswer: item.correctAnswer ?? null,
+    };
+    q.needsReview = computeNeedsReview(q);
+    return q;
+  });
 }
 
 function renderReviewPhase(container, { navigate, rerender, mode, paperNum }) {
@@ -89,6 +199,14 @@ function renderReviewPhase(container, { navigate, rerender, mode, paperNum }) {
   const warningsHtml = parsed.warnings.length
     ? `<div class="warning-banner">${parsed.warnings.map((w) => `⚠️ ${w}`).join("<br/>")}</div>`
     : "";
+  const aiNoticeHtml = state.aiNotice
+    ? `<div class="warning-banner">⚠️ ${escapeHtml(state.aiNotice)}</div>`
+    : "";
+  const sourceBadge = state.parseSource === "ai"
+    ? `<span style="font-size:11px; color:var(--good); font-weight:700;">✨ AI Parsed</span>`
+    : state.parseSource === "ai-generated"
+      ? `<span style="font-size:11px; color:var(--good); font-weight:700;">✨ AI Generated</span>`
+      : `<span style="font-size:11px; color:var(--muted); font-weight:700;">Standard Parse</span>`;
 
   container.innerHTML = `
     <div class="screen" style="gap:14px;">
@@ -99,6 +217,7 @@ function renderReviewPhase(container, { navigate, rerender, mode, paperNum }) {
           <p class="eyebrow" style="margin:0;">REVIEWING · ${paperLabel(mode, paperNum)}</p>
           <span class="mono" style="font-size:11px; color:var(--muted);">Q${idx + 1} / ${questions.length}</span>
         </div>
+        <div style="margin-bottom:6px;">${sourceBadge}</div>
         <div class="progress-track"><div class="progress-fill" style="width:${pct}%;"></div></div>
       </div>
 
@@ -107,7 +226,7 @@ function renderReviewPhase(container, { navigate, rerender, mode, paperNum }) {
         <div class="stat"><div class="stat-value mono good">${questions.length - flaggedCount}</div><div class="stat-label">Ready</div></div>
       </div>
 
-      ${idx === 0 ? warningsHtml : ""}
+      ${idx === 0 ? aiNoticeHtml + warningsHtml : ""}
 
       <div id="question-card"></div>
 
@@ -311,4 +430,3 @@ function escapeHtml(str) {
   return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 function escapeAttr(str) { return escapeHtml(str); }
-      

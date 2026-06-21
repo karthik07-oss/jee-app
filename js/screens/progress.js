@@ -4,6 +4,7 @@
 // SVG line chart helper at the bottom instead.
 
 import { HistoryDB } from "../db.js";
+import { aiChat } from "../ai.js";
 
 const MODE_COLORS = { main: "#A78BFA", advanced: "#2DD4BF" };
 const MODE_LABELS = { main: "JEE Main", advanced: "JEE Advanced" };
@@ -105,6 +106,15 @@ export async function renderProgress(container, { navigate }) {
       </div>
 
       <div class="card">
+        <h2 style="margin:0 0 4px; font-size:14px; font-weight:800;">AI Study Plan</h2>
+        <p class="subtext" style="margin:0 0 10px;">A short, personalized focus plan based on your trends above.</p>
+        <div id="study-plan-output"></div>
+        ${totalAttempts >= 2
+          ? `<button class="btn-primary" id="study-plan-btn" style="width:100%; margin-top:8px;">✨ Get AI Study Plan</button>`
+          : `<p class="subtext">Take one more attempt to unlock a trend-based study plan.</p>`}
+      </div>
+
+      <div class="card">
         <h2 style="margin:0 0 4px; font-size:14px; font-weight:800;">Recent Attempts</h2>
         <div style="margin-top:6px;">
           ${sortedDesc.slice(0, 12).map((e) => attemptRow(e)).join("")}
@@ -115,6 +125,88 @@ export async function renderProgress(container, { navigate }) {
   `;
 
   container.querySelector("#back-setup").onclick = () => navigate("setup");
+
+  const studyPlanBtn = container.querySelector("#study-plan-btn");
+  if (studyPlanBtn) {
+    studyPlanBtn.onclick = async () => {
+      const outputEl = container.querySelector("#study-plan-output");
+      studyPlanBtn.disabled = true;
+      studyPlanBtn.textContent = "Thinking…";
+      try {
+        const summary = buildProgressSummary(sortedAsc);
+        const plan = await getStudyPlan(summary);
+        outputEl.innerHTML = `<p class="review-explanation">${escapeHtml(plan).replace(/\n/g, "<br/>")}</p>`;
+        studyPlanBtn.textContent = "↻ Regenerate";
+      } catch (err) {
+        outputEl.innerHTML = `<p class="review-explanation error">Couldn't generate a study plan: ${escapeHtml(err.message)}</p>`;
+        studyPlanBtn.textContent = "✨ Get AI Study Plan";
+      }
+      studyPlanBtn.disabled = false;
+    };
+  }
+}
+
+/**
+ * Builds a compact NUMERIC summary (not a raw history dump) to send to the
+ * AI for the study plan — first-half vs second-half average, per subject,
+ * so the model can comment on trend direction without us shipping every
+ * question and answer off-device.
+ */
+function buildProgressSummary(sortedAsc) {
+  const avg = (arr) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null);
+  const n = sortedAsc.length;
+  const half = Math.max(1, Math.floor(n / 2));
+  const firstHalf = sortedAsc.slice(0, half);
+  const secondHalf = sortedAsc.slice(half);
+
+  const overall = {
+    totalAttempts: n,
+    earlyAvgScore: round1(avg(firstHalf.map((e) => e.total))),
+    recentAvgScore: round1(avg(secondHalf.map((e) => e.total))),
+  };
+
+  const subjects = {};
+  for (const subj of ["Physics", "Chemistry", "Mathematics"]) {
+    const accuracies = [];
+    for (const e of sortedAsc) {
+      const s = e.bySubject && e.bySubject[subj];
+      if (!s) continue;
+      const attempted = (s.correct || 0) + (s.wrong || 0);
+      if (attempted === 0) continue;
+      accuracies.push((s.correct / attempted) * 100);
+    }
+    if (accuracies.length === 0) continue;
+    const splitAt = Math.max(1, Math.floor(accuracies.length / 2));
+    subjects[subj] = {
+      attemptsWithData: accuracies.length,
+      earlyAccuracyPct: round1(avg(accuracies.slice(0, splitAt))),
+      recentAccuracyPct: round1(avg(accuracies.slice(splitAt))),
+      mostRecentAccuracyPct: round1(accuracies[accuracies.length - 1]),
+    };
+  }
+
+  return { overall, subjects };
+}
+
+function round1(n) {
+  return n === null || n === undefined ? null : Math.round(n * 10) / 10;
+}
+
+/** Sends the numeric summary (never raw question/answer data) to the AI. */
+async function getStudyPlan(summary) {
+  const messages = [
+    {
+      role: "system",
+      content:
+        "You are a supportive, no-nonsense JEE prep coach. Given a compact numeric summary of a " +
+        "student's mock exam history (average scores and per-subject accuracy, early vs recent), write " +
+        "a short, prioritized, plain-language study focus plan in under 180 words. Name specific subjects " +
+        "by their accuracy trend (improving / declining / flat) using the actual numbers given, and end " +
+        "with 2-3 concrete next actions. Plain prose, short paragraphs, no markdown headers or bullets.",
+    },
+    { role: "user", content: JSON.stringify(summary) },
+  ];
+  return await aiChat(messages, { maxTokens: 400, timeoutMs: 45000 });
 }
 
 function attemptRow(e) {

@@ -7,6 +7,7 @@
 
 import { PapersDB, HistoryDB } from "../db.js";
 import { calcMainScore, calcAdvScore } from "../scoring.js";
+import { aiChat, getCached, setCached } from "../ai.js";
 
 const REVIEW_PAGE_SIZE = 20;
 
@@ -219,6 +220,7 @@ function paintResult(container, navigate, ctx) {
   }
 
   wireReviewPagination(container, navigate, ctx);
+  wireExplainButtons(container, paper, answers);
   animateIn(container, score.total, maxMarks);
 }
 
@@ -260,6 +262,10 @@ function reviewItemHtml(q, given) {
   const givenDisplay = isBlank ? "—" : (Array.isArray(given) ? given.join(", ") : given);
   const correctDisplay = Array.isArray(q.correctAnswer) ? q.correctAnswer.join(", ") : (q.correctAnswer ?? "—");
   const snippet = (q.questionText || "").length > 140 ? q.questionText.slice(0, 140).trim() + "…" : q.questionText;
+  const explainHtml = status === "correct"
+    ? ""
+    : `<button class="btn-secondary explain-btn" data-qid="${q.id}" style="margin-top:10px; width:100%; padding:9px; font-size:12px;">✨ Explain This</button>
+       <div class="explain-output" id="explain-${q.id}"></div>`;
 
   return `
     <div class="review-item">
@@ -272,6 +278,7 @@ function reviewItemHtml(q, given) {
         <span><span class="label">Your answer:</span><span class="val ${status === "correct" ? "good" : (status === "wrong" ? "bad" : "")}">${escapeHtml(String(givenDisplay))}</span></span>
         <span><span class="label">Correct:</span><span class="val good">${escapeHtml(String(correctDisplay))}</span></span>
       </div>
+      ${explainHtml}
     </div>
   `;
 }
@@ -300,6 +307,8 @@ function wireReviewPagination(container, navigate, ctx) {
     } else {
       moreBtn.textContent = `Show ${Math.min(REVIEW_PAGE_SIZE, total - reviewVisibleCount)} More ↓`;
     }
+
+    wireExplainButtons(container, paper, answers);
   };
 }
 
@@ -339,6 +348,64 @@ function animateIn(container, total, maxMarks) {
     }
     requestAnimationFrame(tick);
   }
+}
+
+function wireExplainButtons(container, paper, answers) {
+  if (!answers) return; // no per-question data available (fallback/no-review case)
+  container.querySelectorAll(".explain-btn").forEach((btn) => {
+    btn.onclick = async () => {
+      const qid = btn.dataset.qid;
+      const q = paper.questions.find((qq) => qq.id === qid);
+      const outputEl = container.querySelector(`#explain-${qid}`);
+      if (!q || !outputEl) return;
+
+      btn.disabled = true;
+      btn.textContent = "Thinking…";
+
+      try {
+        const cacheKey = `explain_${paper.id}_${qid}`;
+        let explanation = await getCached(cacheKey);
+        if (!explanation) {
+          explanation = await explainQuestion(q, answers[qid]);
+          await setCached(cacheKey, explanation);
+        }
+        outputEl.innerHTML = `<p class="review-explanation">${escapeHtml(explanation).replace(/\n/g, "<br/>")}</p>`;
+        btn.style.display = "none";
+      } catch (err) {
+        outputEl.innerHTML = `<p class="review-explanation error">Couldn't get an explanation: ${escapeHtml(err.message)}</p>`;
+        btn.disabled = false;
+        btn.textContent = "✨ Explain This";
+      }
+    };
+  });
+}
+
+/** Asks the configured AI model for a short step-by-step explanation. */
+async function explainQuestion(q, given) {
+  const optsText = (q.options || []).map((o) => `${o.label}) ${o.text}`).join("\n");
+  const correctText = Array.isArray(q.correctAnswer) ? q.correctAnswer.join(", ") : (q.correctAnswer ?? "not set");
+  const isBlank = given === undefined || given === null || given === "" || (Array.isArray(given) && given.length === 0);
+  const givenText = isBlank ? "(not attempted)" : (Array.isArray(given) ? given.join(", ") : given);
+
+  const messages = [
+    {
+      role: "system",
+      content:
+        "You are a patient JEE (Physics/Chemistry/Maths) tutor. Given a question, its options, the " +
+        "correct answer, and the student's answer, explain step-by-step why the correct answer is right, " +
+        "in under 150 words. Be concrete and use the specific numbers/terms from the question. Plain text " +
+        "only, no markdown headers or bullet symbols.",
+    },
+    {
+      role: "user",
+      content:
+        `Subject: ${q.subject || "Unknown"}\nQuestion: ${q.questionText}\n` +
+        (optsText ? `Options:\n${optsText}\n` : "") +
+        `Correct answer: ${correctText}\nStudent's answer: ${givenText}\n\nExplain why the correct answer is right.`,
+    },
+  ];
+
+  return await aiChat(messages, { maxTokens: 500, timeoutMs: 45000 });
 }
 
 function escapeHtml(str) {
